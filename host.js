@@ -19,7 +19,8 @@
  */
 import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
-import { dirname, join, resolve, sep } from 'node:path'
+import { basename, dirname, join, resolve, sep } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { inflateRawSync } from 'node:zlib'
 
 /** Row id / Client module id used by the patch and the client bundle. */
@@ -128,6 +129,8 @@ class SkillHub {
     this.authCache = undefined
     /** @type {Map<string, {at: number, value: object[]}>} */
     this.builtinCache = new Map()
+    /** @type {Map<string, string>} vendor 脚本缓存 */
+    this.vendorCache = new Map()
     this.disposed = false
   }
 
@@ -505,6 +508,9 @@ class SkillHub {
         case 'remove': return { ok: true, value: this.remove(asRecord(payload)) }
         case 'authorize': return { ok: true, value: this.authorize(asRecord(payload)) }
         case 'read': return { ok: true, value: this.readSkill(asRecord(payload)) }
+        case 'files': return { ok: true, value: this.listSkillFiles(asRecord(payload)) }
+        case 'file': return { ok: true, value: this.readSkillFile(asRecord(payload)) }
+        case 'vendor': return { ok: true, value: this.vendorScript('marked.min.js') }
         default:
           throw new HubError('skill-hub/unknown-endpoint', `unknown endpoint "${endpoint}"`)
       }
@@ -756,6 +762,119 @@ class SkillHub {
       content: truncated ? text.slice(0, MAX_PREVIEW_CHARS) : text,
       truncated,
     }
+  }
+
+  /**
+   * 技能包的根：目录包返回目录，单文件包（<name>.md）返回该文件。
+   * @param {string} skillName - 已校验的技能名。
+   * @returns {{root: string, kind: 'dir'|'file'}} 根路径与类型。
+   */
+  skillRoot(skillName) {
+    const entry = this.poolEntry(skillName)
+    if (entry === undefined) throw new HubError('skill-hub/not-found', `No installed skill is named "${skillName}"`)
+    const file = resolve(entry.path)
+    const dir = resolve(file, '..')
+    try {
+      if (statSync(dir).isDirectory() && resolve(dir, 'SKILL.md') === file) return { root: dir, kind: 'dir' }
+    } catch {
+      /* 目录读不到就当单文件处理 */
+    }
+    return { root: file, kind: 'file' }
+  }
+
+  /**
+   * 技能包的文件树（扁平列表 + depth，前端按层级缩进渲染）。
+   * 根就是 SKILL.md 所在的目录，不额外套一层技能名节点。
+   * @param {Record<string, unknown>} payload - `name`。
+   * @returns {{name: string, kind: 'dir'|'file', nodes: object[]}} 文件树。
+   */
+  listSkillFiles(payload) {
+    const skillName = requireSkillName(payload.name)
+    const { root, kind } = this.skillRoot(skillName)
+    if (kind === 'file') {
+      const size = statSync(root).size
+      return { name: skillName, kind, nodes: [{ path: basename(root), name: basename(root), dir: false, depth: 0, size }] }
+    }
+    const nodes = []
+    const walk = (dir, depth) => {
+      let dirents
+      try {
+        dirents = readdirSync(dir, { withFileTypes: true, encoding: 'utf8' })
+      } catch {
+        return
+      }
+      dirents.sort((a, b) => {
+        // SKILL.md 永远排第一（根目录）
+        const aSkill = depth === 0 && a.isFile() && /^SKILL\.md$/i.test(a.name)
+        const bSkill = depth === 0 && b.isFile() && /^SKILL\.md$/i.test(b.name)
+        if (aSkill !== bSkill) return aSkill ? -1 : 1
+        if (a.isDirectory() !== b.isDirectory()) return a.isDirectory() ? -1 : 1
+        return a.name.localeCompare(b.name)
+      })
+      for (const dirent of dirents) {
+        if (dirent.name.startsWith('.')) continue
+        const full = join(dir, dirent.name)
+        const rel = full.slice(root.length + 1).split(sep).join('/')
+        if (dirent.isDirectory()) {
+          nodes.push({ path: rel, name: dirent.name, dir: true, depth, size: 0 })
+          if (depth < 6) walk(full, depth + 1)
+          continue
+        }
+        let size = 0
+        try {
+          size = statSync(full).size
+        } catch {
+          size = 0
+        }
+        nodes.push({ path: rel, name: dirent.name, dir: false, depth, size })
+      }
+    }
+    walk(root, 0)
+    return { name: skillName, kind, nodes }
+  }
+
+  /**
+   * 读技能包里的一个文本文件（相对技能根，防越界）。
+   * @param {Record<string, unknown>} payload - `name`、`path`。
+   * @returns {{path: string, name: string, text: string, truncated: boolean, binary: boolean}} 文件内容。
+   */
+  readSkillFile(payload) {
+    const skillName = requireSkillName(payload.name)
+    const relative = typeof payload.path === 'string' ? payload.path : ''
+    const { root, kind } = this.skillRoot(skillName)
+    const base = kind === 'file' ? dirname(root) : root
+    const target = resolve(base, relative)
+    if (!target.startsWith(resolve(base) + sep) && target !== resolve(root)) {
+      throw new HubError('skill-hub/invalid-path', 'File is outside the skill directory')
+    }
+    const name = basename(target)
+    const TEXT_EXT = /\.(md|markdown|txt|json|ya?ml|toml|csv|tsv|log|ini|cfg|conf|sh|ps1|py|js|mjs|cjs|ts|tsx|jsx|css|html?|xml|svg)$/i
+    if (!TEXT_EXT.test(name)) {
+      const size = statSync(target).size
+      return { path: relative, name, text: '', truncated: false, binary: true, size }
+    }
+    const raw = readFileSync(target, 'utf8')
+    const truncated = raw.length > MAX_PREVIEW_CHARS
+    return {
+      path: relative,
+      name,
+      text: truncated ? raw.slice(0, MAX_PREVIEW_CHARS) : raw,
+      truncated,
+      binary: false,
+    }
+  }
+
+  /**
+   * 读插件自带的浏览器端脚本（当前只有 marked），供预览里渲染 markdown。
+   * @param {string} file - vendor 目录下的文件名。
+   * @returns {string} 脚本文本。
+   */
+  vendorScript(file) {
+    if (this.vendorCache.has(file)) return this.vendorCache.get(file)
+    const base = dirname(fileURLToPath(import.meta.url))
+    const source = readFileSync(join(base, 'vendor', file), 'utf8')
+    this.vendorCache.set(file, source)
+    return source
   }
 
   /**

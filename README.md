@@ -31,6 +31,10 @@
 | `stateDir` | `<dshHome>/skill-hub` | 授权表目录 |
 | `defaultPolicy` | `all` | 未显式授权的预设的可选值：`all` 或 `none` |
 
+## 第三方组件
+
+- [`marked`](https://github.com/markedjs/marked) v12.0.2（MIT）—— `vendor/marked.min.js`，仅用于技能预览里的 markdown 渲染；加载失败时退回纯文本。
+
 ## 已知边界
 
 - 卸载本插件后，授权不再被强制执行；池中的技能文件仍在磁盘上，是否可见取决于各预设自己的 `skill-filesystem` 配置。

@@ -43,6 +43,7 @@ window.__ModuleLoader__.load({
       'actions.upload': '上传安装',
       'actions.refresh': '刷新',
       'actions.preview': '预览',
+    'preview.binary': '该文件不是文本格式，暂不支持预览',
       'actions.hidePreview': '收起',
       'actions.remove': '删除',
       'actions.confirm': '确认删除',
@@ -118,6 +119,7 @@ window.__ModuleLoader__.load({
       'actions.upload': 'Install',
       'actions.refresh': 'Refresh',
       'actions.preview': 'Preview',
+    'preview.binary': 'This file is not text and cannot be previewed',
       'actions.hidePreview': 'Hide',
       'actions.remove': 'Remove',
       'actions.confirm': 'Delete',
@@ -255,7 +257,43 @@ window.__ModuleLoader__.load({
 .sh-switch[aria-checked="true"]::after{transform:translateX(16px);background:var(--dsw-alias-label-primary-foreground,#fff)}
 .sh-switch:focus-visible{outline:2px solid var(--dsw-alias-brand-primary);outline-offset:2px}
 .sh-switch:disabled{opacity:.5;cursor:default}
-.sh-preview{margin:0;max-height:320px;overflow:auto;padding:10px 12px;border-radius:8px;border:.5px solid var(--dsw-alias-border-l1);background:var(--dsw-alias-bg-layer-1);font-family:var(--dsw-font-mono,ui-monospace,SFMono-Regular,Menlo,Consolas,monospace);font-size:12px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--dsw-alias-label-primary)}
+.sh-ov{position:fixed;inset:0;z-index:1250;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(0,0,0,.35)}
+.sh-ov-card{width:min(1000px,100%);height:min(80vh,720px);display:flex;flex-direction:column;background:var(--dsw-alias-bg-base);color:var(--dsw-alias-label-primary);border-radius:28px;box-shadow:0 0 0 0.5px rgba(0,0,0,.16),0 24px 64px rgba(0,0,0,.28);overflow:hidden}
+.sh-ov-head{display:flex;align-items:center;gap:12px;padding:22px 14px 12px 24px}
+.sh-ov-title{margin:0;font-size:16px;line-height:24px;font-weight:500;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sh-ov-close{width:28px;height:28px;flex:none;display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:8px;background:transparent;color:var(--dsw-alias-label-caption);cursor:pointer}
+.sh-ov-close:hover{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}
+.sh-ov-body{flex:1;min-height:0;display:flex;border-top:0.5px solid var(--dsw-alias-border-l4)}
+.sh-tree{width:240px;flex:none;overflow:auto;padding:8px 6px 12px;border-right:0.5px solid var(--dsw-alias-border-l4)}
+.sh-tree-row{display:flex;align-items:center;gap:6px;width:100%;border:0;background:transparent;color:var(--dsw-alias-label-secondary);font-size:12.5px;line-height:18px;padding:4px 8px;border-radius:7px;cursor:pointer;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sh-tree-row:hover{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}
+.sh-tree-row[data-active='true']{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary);font-weight:500}
+.sh-tree-dir{color:var(--dsw-alias-label-caption)}
+.sh-tree-mark{width:12px;flex:none;text-align:center;font-size:10px;line-height:1;transform:translateY(0.5px)}
+.sh-tree-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sh-doc{flex:1;min-width:0;overflow:auto;padding:16px 24px 24px}
+.sh-doc pre{margin:0;font-family:var(--dsw-font-mono,ui-monospace,SFMono-Regular,Menlo,Consolas,monospace);font-size:12px;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--dsw-alias-label-secondary)}
+.sh-empty-doc{color:var(--dsw-alias-label-caption);font-size:13px}
+.sh-md{font-size:13.5px;line-height:1.75;color:var(--dsw-alias-label-primary);overflow-wrap:anywhere}
+.sh-md h1,.sh-md h2,.sh-md h3,.sh-md h4{margin:16px 0 8px;line-height:1.4;font-weight:600}
+.sh-md h1{font-size:20px}
+.sh-md h2{font-size:17px}
+.sh-md h3{font-size:15px}
+.sh-md p{margin:0 0 10px}
+.sh-md ul,.sh-md ol{margin:0 0 10px;padding-left:22px}
+.sh-md li{margin:0 0 4px}
+.sh-md code{font-family:var(--dsw-font-mono,ui-monospace,SFMono-Regular,Menlo,Consolas,monospace);font-size:12px;background:var(--dsw-alias-bg-layer-1);border-radius:5px;padding:1px 5px}
+.sh-md pre{background:var(--dsw-alias-bg-layer-1);border-radius:8px;padding:10px 12px;overflow:auto;margin:0 0 10px}
+.sh-md pre code{background:transparent;padding:0}
+.sh-md blockquote{margin:0 0 10px;padding-left:12px;border-left:2px solid var(--dsw-alias-border-l4);color:var(--dsw-alias-label-secondary)}
+.sh-md table{border-collapse:collapse;margin:0 0 10px;font-size:12.5px}
+.sh-md th,.sh-md td{border:0.5px solid var(--dsw-alias-border-l4);padding:6px 10px;text-align:left}
+.sh-md a{color:var(--dsw-alias-state-business-primary);text-decoration:underline}
+.sh-md hr{border:0;border-top:0.5px solid var(--dsw-alias-border-l4);margin:14px 0}
+.sh-fm{margin:0 0 14px;border:0.5px solid var(--dsw-alias-border-l4);border-radius:10px;background:var(--dsw-alias-bg-layer-1);overflow:hidden}
+.sh-fm>summary{cursor:pointer;padding:7px 12px;font-size:12.5px;line-height:18px;color:var(--dsw-alias-label-secondary);user-select:none}
+.sh-fm>summary:hover{color:var(--dsw-alias-label-primary)}
+.sh-fm pre{margin:0;padding:8px 12px 12px;background:transparent;font-size:11.5px;line-height:1.7;color:var(--dsw-alias-label-caption);white-space:pre-wrap}
 .sh-empty{padding:18px 16px;color:var(--dsw-alias-label-secondary);font-size:13px}
 .sh-warn{color:var(--dsw-alias-state-warn-primary)}
 .sh-foot{margin:18px 0 0;color:var(--dsw-alias-label-secondary);font-size:12px}
@@ -392,9 +430,8 @@ window.__ModuleLoader__.load({
      * @returns {object} React element.
      */
     function PoolCard(props) {
-      const { entry, allowed, busy, tr, preview, confirming, canAuthorize, reading } = props
+      const { entry, allowed, busy, tr, confirming, canAuthorize, reading } = props
       const manualOnly = entry.invocation?.modelInvocable === false
-      const open = preview !== null && preview.name === entry.name
       const meta = entry.valid === false
         ? (entry.error ?? '')
         : [
@@ -423,12 +460,6 @@ window.__ModuleLoader__.load({
         ),
         h('p', { className: 'sh-item-desc' }, entry.description || (entry.error ?? '')),
         h('div', { className: 'sh-item-meta' }, meta),
-        open ? h('pre', {
-          className: 'sh-preview',
-          tabIndex: 0,
-          role: 'region',
-          'aria-label': entry.name,
-        }, preview.content) : null,
         h('div', { className: 'sh-item-foot' },
           confirming === entry.name
             ? h('span', { className: 'sh-confirm' },
@@ -442,7 +473,7 @@ window.__ModuleLoader__.load({
                 className: 'sh-btn sh-btn-link',
                 disabled: busy,
                 onClick: () => props.onPreview(entry.name),
-              }, reading ? tr('busy.previewing') : open ? tr('actions.hidePreview') : tr('actions.preview')),
+              }, reading ? tr('busy.previewing') : tr('actions.preview')),
               h('button', {
                 key: 'remove',
                 type: 'button',
@@ -503,7 +534,12 @@ window.__ModuleLoader__.load({
       const [presetId, setPresetId] = React.useState(null)
       const [busy, setBusy] = React.useState(null)
       const [notice, setNotice] = React.useState(null)
-      const [preview, setPreview] = React.useState(null)
+      const [previewSkill, setPreviewSkill] = React.useState(null)
+      const [previewTree, setPreviewTree] = React.useState(null)
+      const [previewPath, setPreviewPath] = React.useState('')
+      const [previewDoc, setPreviewDoc] = React.useState(null)
+      const [previewLoading, setPreviewLoading] = React.useState(false)
+      const [collapsedDirs, setCollapsedDirs] = React.useState(() => new Set())
       const [confirming, setConfirming] = React.useState(null)
       const [dragging, setDragging] = React.useState(false)
       const inputRef = React.useRef(null)
@@ -689,15 +725,37 @@ window.__ModuleLoader__.load({
         void installFile(event.dataTransfer?.files?.[0])
       }
 
-      const togglePreview = async (name) => {
-        if (preview !== null && preview.name === name) {
-          setPreview(null)
-          return
-        }
-        setBusy(`read:${name}`)
+      /** 读技能包里的某个文件并显示。 */
+      const openSkillFile = async (name, path) => {
+        setPreviewLoading(true)
+        setPreviewPath(path)
         try {
-          const value = await requestRef.current('read', { name })
-          setPreview(value)
+          const value = await requestRef.current('file', { name, path })
+          setPreviewDoc(value)
+        } catch (error) {
+          setNotice({ kind: 'error', text: localizedError(tr, error) })
+          setPreviewDoc(null)
+        } finally {
+          setPreviewLoading(false)
+        }
+      }
+
+      /** 打开预览弹窗：先取文件树，默认打开 SKILL.md（没有就打开第一个文本文件）。 */
+      const openPreview = async (name) => {
+        void ensureMarked(requestRef.current)
+        setBusy(`read:${name}`)
+        setPreviewSkill(name)
+        setPreviewTree(null)
+        setPreviewDoc(null)
+        setCollapsedDirs(new Set())
+        try {
+          const tree = await requestRef.current('files', { name })
+          setPreviewTree(tree)
+          const nodes = Array.isArray(tree?.nodes) ? tree.nodes : []
+          const preferred = nodes.find(node => !node.dir && /^SKILL\.md$/i.test(node.name))
+            ?? nodes.find(node => !node.dir && /\.(md|markdown|txt)$/i.test(node.name))
+            ?? nodes.find(node => !node.dir)
+          if (preferred !== undefined) void openSkillFile(name, preferred.path)
         } catch (error) {
           setNotice({ kind: 'error', text: localizedError(tr, error) })
         } finally {
@@ -705,12 +763,19 @@ window.__ModuleLoader__.load({
         }
       }
 
+      const closePreview = () => {
+        setPreviewSkill(null)
+        setPreviewTree(null)
+        setPreviewDoc(null)
+        setPreviewPath('')
+      }
+
       const removeSkill = async (name) => {
         setConfirming(null)
         setBusy(`remove:${name}`)
         try {
           await requestRef.current('remove', { name })
-          if (preview !== null && preview.name === name) setPreview(null)
+          if (previewSkill === name) closePreview()
           setNotice({ kind: 'ok', text: tr('notice.removed', { name }) })
           await load()
         } catch (error) {
@@ -797,7 +862,7 @@ window.__ModuleLoader__.load({
                   'aria-pressed': preset.id === presetId ? 'true' : 'false',
                   'aria-describedby': preset.broken === undefined ? undefined : `sh-broken-${preset.id}`,
                   title: preset.broken ?? preset.id,
-                  onClick: () => { setPresetId(preset.id); setPreview(null); setConfirming(null) },
+                  onClick: () => { setPresetId(preset.id); closePreview(); setConfirming(null) },
                 },
                 presetLabel(tr, preset),
                 preset.isDefault ? h('span', { className: 'sh-badge' }, tr('preset.default')) : null,
@@ -856,11 +921,10 @@ window.__ModuleLoader__.load({
               busy: busy !== null,
               reading: busy === `read:${entry.name}`,
               tr,
-              preview,
               confirming,
               canAuthorize: presetId !== null,
               onToggle: toggleSkill,
-              onPreview: (name) => { void togglePreview(name) },
+              onPreview: (name) => { void openPreview(name) },
               onAskRemove: (name) => { setConfirming(name) },
               onCancelRemove: () => { setConfirming(null) },
               onRemove: (name) => { void removeSkill(name) },
@@ -908,6 +972,28 @@ window.__ModuleLoader__.load({
           h('p', { className: 'sh-foot sh-version' }, `Skills UI v${UI_REVISION} · Host v${snapshot?.hostRevision ?? '?'}`),
         ),
       ),
+      previewSkill === null ? null : h(SkillPreviewModal, {
+        name: previewSkill,
+        tree: previewTree,
+        path: previewPath,
+        doc: previewDoc,
+        loading: previewLoading,
+        tr,
+        collapsed: collapsedDirs,
+        onToggleDir: (dirPath) => {
+          setCollapsedDirs(current => {
+            const next = new Set(current)
+            if (next.has(dirPath)) next.delete(dirPath)
+            else next.add(dirPath)
+            return next
+          })
+        },
+        onPick: (filePath) => { void openSkillFile(previewSkill, filePath) },
+        onClose: closePreview,
+        renderDoc: (text) => (/\.(md|markdown)$/i.test(previewPath)
+          ? h('div', { className: 'sh-md', dangerouslySetInnerHTML: { __html: renderMarkdownHtml(text) } })
+          : h('pre', null, text)),
+      }),
       // Floating toast: it overlays the page instead of taking a row, so saving
       // an authorization never shifts the layout under the pointer.
       notice === null ? null : h('div', { className: 'sh-toast-layer' },
@@ -933,6 +1019,109 @@ window.__ModuleLoader__.load({
      * @param {object} props - `size` requested by the sidebar row.
      * @returns {object} React element.
      */
+    /** marked 只加载一次。 */
+    let markedLib = null
+    let markedLoading = null
+
+    /**
+     * 取插件自带的 marked 并执行（UMD 会挂到 window.marked）。
+     * @param {Function} request - Host 请求函数。
+     * @returns {Promise<object|null>} marked 实例。
+     */
+    async function ensureMarked(request) {
+      if (markedLib !== null) return markedLib
+      if (markedLoading !== null) return markedLoading
+      markedLoading = (async () => {
+        try {
+          const source = await request('vendor', { file: 'marked.min.js' })
+          new Function(String(source))()
+          markedLib = window.marked ?? null
+          if (markedLib !== null) markedLib.setOptions?.({ gfm: true, breaks: false })
+          return markedLib
+        } catch {
+          return null
+        }
+      })()
+      return markedLoading
+    }
+
+    /**
+     * 渲染 markdown 为 HTML；marked 不可用时退回纯文本转义。
+     * @param {string} text - 原文。
+     * @returns {string} HTML。
+     */
+    function renderMarkdownHtml(text) {
+      const source = String(text ?? '')
+      const escape = (value) => value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      // 顶部 YAML front-matter（--- ... ---）折叠成"元信息"块，不参与正文渲染
+      const front = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?/.exec(source)
+      const meta = front === null ? '' : front[1]
+      const raw = front === null ? source : source.slice(front[0].length)
+      const metaHtml = meta === ''
+        ? ''
+        : '<details class="sh-fm"><summary>元信息</summary><pre>' + escape(meta) + '</pre></details>'
+      if (markedLib === null) return metaHtml + '<pre>' + escape(raw) + '</pre>'
+      const html = markedLib.parse(raw)
+      // 技能是本地文件，仍然去掉脚本与内联事件，避免把可执行内容带进渲染树
+      const clean = String(html)
+        .replace(/<script[\s\S]*?<\/script>/gi, '')
+        .replace(/\son\w+\s*=\s*"[^"]*"/gi, '')
+        .replace(/\son\w+\s*=\s*'[^']*'/gi, '')
+      return metaHtml + clean
+    }
+
+    /** 预览弹窗：左侧文件树 + 右侧内容。 */
+    function SkillPreviewModal(props) {
+      const { name, tree, path, doc, loading, tr, collapsed, onToggleDir, onPick, onClose, renderDoc } = props
+      const nodes = Array.isArray(tree?.nodes) ? tree.nodes : []
+      const rows = []
+      let hideDeeperThan = null
+      for (const node of nodes) {
+        if (hideDeeperThan !== null && node.depth > hideDeeperThan) continue
+        const isCollapsed = node.dir && collapsed.has(node.path)
+        if (node.dir && isCollapsed) hideDeeperThan = node.depth
+        else hideDeeperThan = null
+        rows.push(h('button', {
+          key: node.path,
+          type: 'button',
+          className: 'sh-tree-row' + (node.dir ? ' sh-tree-dir' : ''),
+          style: { paddingLeft: String(8 + node.depth * 14) + 'px' },
+          'data-active': !node.dir && node.path === path ? 'true' : undefined,
+          onClick: () => { if (node.dir) onToggleDir(node.path); else onPick(node.path) },
+        }, [
+          h('span', { key: 'i', className: 'sh-tree-mark' }, node.dir ? (isCollapsed ? '▸' : '▾') : ''),
+          h('span', { key: 'n', className: 'sh-tree-name' }, node.name),
+        ]))
+      }
+      return h('div', {
+        className: 'sh-ov',
+        onMouseDown: (event) => { if (event.target === event.currentTarget) onClose() },
+      }, h('div', { className: 'sh-ov-card', onMouseDown: (event) => event.stopPropagation() }, [
+        h('div', { key: 'h', className: 'sh-ov-head' }, [
+          h('h2', { key: 't', className: 'sh-ov-title' }, tr('actions.preview') + ' · ' + name),
+          h('button', {
+            key: 'x', type: 'button', className: 'sh-ov-close',
+            'aria-label': tr('actions.hidePreview'), title: tr('actions.hidePreview'),
+            onClick: onClose,
+          }, h('svg', { width: 14, height: 14, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round' }, [
+            h('path', { key: 'a', d: 'M6 6l12 12' }),
+            h('path', { key: 'b', d: 'M18 6L6 18' }),
+          ])),
+        ]),
+        h('div', { key: 'b', className: 'sh-ov-body' }, [
+          h('div', { key: 'tree', className: 'sh-tree' }, rows),
+          h('div', { key: 'doc', className: 'sh-doc' },
+            loading
+              ? h('div', { className: 'sh-empty-doc' }, tr('busy.previewing'))
+              : doc === null
+                ? h('div', { className: 'sh-empty-doc' }, '—')
+                : doc.binary
+                  ? h('div', { className: 'sh-empty-doc' }, tr('preview.binary'))
+                  : renderDoc(doc.text)),
+        ]),
+      ]))
+    }
+
     function SkillHubIcon(props) {
       const size = typeof props.size === 'number' ? props.size : 20
       return h('svg', {
