@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="300" viewBox="0 0 640 300" role="img" aria-label="One shared external skill pool feeding two agent roles, each role granted a different subset of skills">
+  <!-- Shared external skill pool: three installed skill cards. -->
+  <rect x="32" y="40" width="180" height="220" rx="16" fill="#EEF1FB" stroke="#C9D2F2" stroke-width="1.5"/>
+  <g>
+    <rect x="48" y="56" width="148" height="60" rx="10" fill="#F8FAFF" stroke="#C9D2F2" stroke-width="1.5"/>
+    <rect x="60" y="68" width="22" height="22" rx="5" fill="#5B7CFA"/>
+    <path d="M65.5 75h11M65.5 80.5h7" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+    <rect x="94" y="70" width="76" height="7" rx="3.5" fill="#A9B4D6"/>
+    <rect x="94" y="86" width="52" height="7" rx="3.5" fill="#C9D2F2"/>
+  </g>
+  <g>
+    <rect x="48" y="124" width="148" height="60" rx="10" fill="#F8FAFF" stroke="#C9D2F2" stroke-width="1.5"/>
+    <rect x="60" y="136" width="22" height="22" rx="5" fill="#5B7CFA"/>
+    <path d="M65.5 143h11M65.5 148.5h7" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+    <rect x="94" y="138" width="66" height="7" rx="3.5" fill="#A9B4D6"/>
+    <rect x="94" y="154" width="44" height="7" rx="3.5" fill="#C9D2F2"/>
+  </g>
+  <g>
+    <rect x="48" y="192" width="148" height="60" rx="10" fill="#F8FAFF" stroke="#C9D2F2" stroke-width="1.5"/>
+    <rect x="60" y="204" width="22" height="22" rx="5" fill="#8A9BE0"/>
+    <path d="M65.5 211h11M65.5 216.5h7" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+    <rect x="94" y="206" width="72" height="7" rx="3.5" fill="#A9B4D6"/>
+    <rect x="94" y="222" width="38" height="7" rx="3.5" fill="#C9D2F2"/>
+  </g>
+
+  <!-- The pool feeds every role: one trunk, two square elbows, clean arrowheads. -->
+  <path d="M232 104V212" fill="none" stroke="#5B7CFA" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M232 104H264M232 212H264" fill="none" stroke="#5B7CFA" stroke-width="2.5" stroke-linecap="round"/>
+  <polygon points="264,98 278,104 264,110" fill="#5B7CFA"/>
+  <polygon points="264,206 278,212 264,218" fill="#5B7CFA"/>
+
+  <!-- Role A: four of five pool skills granted. -->
+  <rect x="288" y="56" width="320" height="96" rx="14" fill="#F8FAFF" stroke="#C9D2F2" stroke-width="1.5"/>
+  <rect x="304" y="70" width="22" height="22" rx="6" fill="#DDE3F7" stroke="#8A9BE0" stroke-width="1.5"/>
+  <path d="M309.5 81h11" stroke="#5B7CFA" stroke-width="2" stroke-linecap="round"/>
+  <rect x="336" y="77" width="84" height="8" rx="4" fill="#A9B4D6"/>
+  <rect x="304" y="112" width="20" height="20" rx="6" fill="#5B7CFA"/>
+  <rect x="332" y="112" width="20" height="20" rx="6" fill="#5B7CFA"/>
+  <rect x="360" y="112" width="20" height="20" rx="6" fill="#5B7CFA"/>
+  <rect x="388" y="112" width="20" height="20" rx="6" fill="#5B7CFA"/>
+  <rect x="416" y="112" width="20" height="20" rx="6" fill="#F8FAFF" stroke="#C9D2F2" stroke-width="1.5"/>
+
+  <!-- Role B: a different subset of the same pool. -->
+  <rect x="288" y="164" width="320" height="96" rx="14" fill="#F8FAFF" stroke="#C9D2F2" stroke-width="1.5"/>
+  <rect x="304" y="178" width="22" height="22" rx="6" fill="#DDE3F7" stroke="#8A9BE0" stroke-width="1.5"/>
+  <path d="M309.5 189h11" stroke="#5B7CFA" stroke-width="2" stroke-linecap="round"/>
+  <rect x="336" y="185" width="70" height="8" rx="4" fill="#A9B4D6"/>
+  <rect x="304" y="220" width="20" height="20" rx="6" fill="#5B7CFA"/>
+  <rect x="332" y="220" width="20" height="20" rx="6" fill="#F8FAFF" stroke="#C9D2F2" stroke-width="1.5"/>
+  <rect x="360" y="220" width="20" height="20" rx="6" fill="#F8FAFF" stroke="#C9D2F2" stroke-width="1.5"/>
+  <rect x="388" y="220" width="20" height="20" rx="6" fill="#F8FAFF" stroke="#C9D2F2" stroke-width="1.5"/>
+  <rect x="416" y="220" width="20" height="20" rx="6" fill="#F8FAFF" stroke="#C9D2F2" stroke-width="1.5"/>
+</svg>

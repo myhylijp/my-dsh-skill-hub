@@ -1,0 +1,7 @@
+# Skill hub — one Host row that owns the global skill pool, the per-preset
+# authorization state, and the built-in-skill switches. The Client half adds
+# the `skills` sidebar entry; it needs no row of its own.
+- insert:
+    - id: skill-hub
+      name: 'my-dsh-skill-hub'
+      config: {}

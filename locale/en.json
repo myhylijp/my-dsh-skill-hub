@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "Skills",
+    "description": "One shared external skill pool: install a SKILL.md or ZIP once, then grant each agent role the pool skills it may use and turn that role’s system built-in skills on or off individually. An unauthorized skill never reaches the role’s model catalog and cannot be loaded.",
+    "detail": "docs/DETAIL.md"
+  }
+}
