@@ -3,6 +3,10 @@
   "version": "0.2.0",
   "license": "MIT",
   "description": "Skills panel: one shared external skill pool plus per-role authorization of pool skills and of each role's system built-in skills",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/myhylijp/my-dsh-skill-hub.git"
+  },
   "type": "module",
   "exports": {
     ".": "./host.js",
