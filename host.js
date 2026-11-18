@@ -35,7 +35,7 @@ const HTTP_PATH = '/api/skill-hub'
  * Host build marker, reported in the page snapshot. A running Harness keeps its
  * loaded modules, so this states which Host half the page is talking to.
  */
-const HOST_REVISION = '2026-11-14.5'
+const HOST_REVISION = '2026-11-18.1'
 /** Provider name registered in every Agent's scope layer. */
 const PROVIDER_NAME = 'skill-hub'
 /** Source label of a pool skill in the registry. */
@@ -508,8 +508,8 @@ class SkillHub {
         case 'remove': return { ok: true, value: this.remove(asRecord(payload)) }
         case 'authorize': return { ok: true, value: this.authorize(asRecord(payload)) }
         case 'read': return { ok: true, value: this.readSkill(asRecord(payload)) }
-        case 'files': return { ok: true, value: this.listSkillFiles(asRecord(payload)) }
-        case 'file': return { ok: true, value: this.readSkillFile(asRecord(payload)) }
+        case 'files': return { ok: true, value: await this.listSkillFiles(asRecord(payload)) }
+        case 'file': return { ok: true, value: await this.readSkillFile(asRecord(payload)) }
         case 'vendor': return { ok: true, value: this.vendorScript('marked.min.js') }
         default:
           throw new HubError('skill-hub/unknown-endpoint', `unknown endpoint "${endpoint}"`)
@@ -769,10 +769,21 @@ class SkillHub {
    * @param {string} skillName - 已校验的技能名。
    * @returns {{root: string, kind: 'dir'|'file'}} 根路径与类型。
    */
-  skillRoot(skillName) {
-    const entry = this.poolEntry(skillName)
-    if (entry === undefined) throw new HubError('skill-hub/not-found', `No installed skill is named "${skillName}"`)
-    const file = resolve(entry.path)
+  async skillRoot(skillName, options = {}) {
+    let file
+    if (options.builtin === true) {
+      const presetId = typeof options.presetId === 'string' && options.presetId !== '' ? options.presetId : null
+      const builtin = await this.builtinSkills(presetId)
+      const skill = builtin.get(skillName)
+      if (skill === undefined || typeof skill.path !== 'string' || skill.path === '') {
+        throw new HubError('skill-hub/not-found', `No previewable file for built-in skill "${skillName}"`)
+      }
+      file = resolve(skill.path)
+    } else {
+      const entry = this.poolEntry(skillName)
+      if (entry === undefined) throw new HubError('skill-hub/not-found', `No installed skill is named "${skillName}"`)
+      file = resolve(entry.path)
+    }
     const dir = resolve(file, '..')
     try {
       if (statSync(dir).isDirectory() && resolve(dir, 'SKILL.md') === file) return { root: dir, kind: 'dir' }
@@ -788,9 +799,12 @@ class SkillHub {
    * @param {Record<string, unknown>} payload - `name`。
    * @returns {{name: string, kind: 'dir'|'file', nodes: object[]}} 文件树。
    */
-  listSkillFiles(payload) {
+  async listSkillFiles(payload) {
     const skillName = requireSkillName(payload.name)
-    const { root, kind } = this.skillRoot(skillName)
+    const { root, kind } = await this.skillRoot(skillName, {
+      builtin: payload.builtin === true,
+      presetId: typeof payload.presetId === 'string' ? payload.presetId : null,
+    })
     if (kind === 'file') {
       const size = statSync(root).size
       return { name: skillName, kind, nodes: [{ path: basename(root), name: basename(root), dir: false, depth: 0, size }] }
@@ -838,10 +852,13 @@ class SkillHub {
    * @param {Record<string, unknown>} payload - `name`、`path`。
    * @returns {{path: string, name: string, text: string, truncated: boolean, binary: boolean}} 文件内容。
    */
-  readSkillFile(payload) {
+  async readSkillFile(payload) {
     const skillName = requireSkillName(payload.name)
     const relative = typeof payload.path === 'string' ? payload.path : ''
-    const { root, kind } = this.skillRoot(skillName)
+    const { root, kind } = await this.skillRoot(skillName, {
+      builtin: payload.builtin === true,
+      presetId: typeof payload.presetId === 'string' ? payload.presetId : null,
+    })
     const base = kind === 'file' ? dirname(root) : root
     const target = resolve(base, relative)
     if (!target.startsWith(resolve(base) + sep) && target !== resolve(root)) {

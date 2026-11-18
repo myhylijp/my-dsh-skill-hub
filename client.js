@@ -34,7 +34,7 @@ window.__ModuleLoader__.load({
      * Visible build marker. A browser keeps the bundle it already loaded, so the
      * page states which build it runs: bump this whenever the Client half changes.
      */
-    const UI_REVISION = '2026-11-14.11'
+    const UI_REVISION = '2026-11-18.1'
 
     const zh = {
       panel: '技能',
@@ -514,6 +514,14 @@ window.__ModuleLoader__.load({
         ),
         h('p', { className: 'sh-item-desc' }, entry.description),
         h('div', { className: 'sh-item-meta' }, tr('builtin.source', { provider: entry.provider })),
+        h('div', { className: 'sh-item-foot' },
+          h('button', {
+            type: 'button',
+            className: 'sh-btn sh-btn-link',
+            disabled: busy,
+            onClick: () => props.onPreview(entry.name),
+          }, tr('actions.preview')),
+        ),
       )
     }
 
@@ -539,6 +547,8 @@ window.__ModuleLoader__.load({
       const [previewPath, setPreviewPath] = React.useState('')
       const [previewDoc, setPreviewDoc] = React.useState(null)
       const [previewLoading, setPreviewLoading] = React.useState(false)
+      const [previewBuiltin, setPreviewBuiltin] = React.useState(false)
+      const [previewPresetId, setPreviewPresetId] = React.useState(null)
       const [collapsedDirs, setCollapsedDirs] = React.useState(() => new Set())
       const [confirming, setConfirming] = React.useState(null)
       const [dragging, setDragging] = React.useState(false)
@@ -726,11 +736,11 @@ window.__ModuleLoader__.load({
       }
 
       /** 读技能包里的某个文件并显示。 */
-      const openSkillFile = async (name, path) => {
+      const openSkillFile = async (name, path, builtin = false, preset = null) => {
         setPreviewLoading(true)
         setPreviewPath(path)
         try {
-          const value = await requestRef.current('file', { name, path })
+          const value = await requestRef.current('file', { name, path, builtin, presetId: preset })
           setPreviewDoc(value)
         } catch (error) {
           setNotice({ kind: 'error', text: localizedError(tr, error) })
@@ -741,21 +751,23 @@ window.__ModuleLoader__.load({
       }
 
       /** 打开预览弹窗：先取文件树，默认打开 SKILL.md（没有就打开第一个文本文件）。 */
-      const openPreview = async (name) => {
+      const openPreview = async (name, builtin = false) => {
         void ensureMarked(requestRef.current)
         setBusy(`read:${name}`)
         setPreviewSkill(name)
+        setPreviewBuiltin(builtin)
+        setPreviewPresetId(builtin ? presetId : null)
         setPreviewTree(null)
         setPreviewDoc(null)
         setCollapsedDirs(new Set())
         try {
-          const tree = await requestRef.current('files', { name })
+          const tree = await requestRef.current('files', { name, builtin, presetId: builtin ? presetId : null })
           setPreviewTree(tree)
           const nodes = Array.isArray(tree?.nodes) ? tree.nodes : []
           const preferred = nodes.find(node => !node.dir && /^SKILL\.md$/i.test(node.name))
             ?? nodes.find(node => !node.dir && /\.(md|markdown|txt)$/i.test(node.name))
             ?? nodes.find(node => !node.dir)
-          if (preferred !== undefined) void openSkillFile(name, preferred.path)
+          if (preferred !== undefined) void openSkillFile(name, preferred.path, builtin, builtin ? presetId : null)
         } catch (error) {
           setNotice({ kind: 'error', text: localizedError(tr, error) })
         } finally {
@@ -765,6 +777,8 @@ window.__ModuleLoader__.load({
 
       const closePreview = () => {
         setPreviewSkill(null)
+        setPreviewBuiltin(false)
+        setPreviewPresetId(null)
         setPreviewTree(null)
         setPreviewDoc(null)
         setPreviewPath('')
@@ -966,6 +980,7 @@ window.__ModuleLoader__.load({
                 tr,
                 canAuthorize: presetId !== null && builtinControlsReady,
                 onToggle: toggleBuiltin,
+                onPreview: (name) => { void openPreview(name, true) },
               }))),
           ),
           h('p', { className: 'sh-foot' }, tr('foot.poolDir'), ' ', h('code', null, snapshot?.poolDir ?? '')),
@@ -988,7 +1003,7 @@ window.__ModuleLoader__.load({
             return next
           })
         },
-        onPick: (filePath) => { void openSkillFile(previewSkill, filePath) },
+        onPick: (filePath) => { void openSkillFile(previewSkill, filePath, previewBuiltin, previewPresetId) },
         onClose: closePreview,
         renderDoc: (text) => (/\.(md|markdown)$/i.test(previewPath)
           ? h('div', { className: 'sh-md', dangerouslySetInnerHTML: { __html: renderMarkdownHtml(text) } })
