@@ -35,7 +35,7 @@ const HTTP_PATH = '/api/skill-hub'
  * Host build marker, reported in the page snapshot. A running Harness keeps its
  * loaded modules, so this states which Host half the page is talking to.
  */
-const HOST_REVISION = '2026-11-18.1'
+const HOST_REVISION = '2026-11-18.2'
 /** Provider name registered in every Agent's scope layer. */
 const PROVIDER_NAME = 'skill-hub'
 /** Source label of a pool skill in the registry. */
@@ -769,16 +769,45 @@ class SkillHub {
    * @param {string} skillName - 已校验的技能名。
    * @returns {{root: string, kind: 'dir'|'file'}} 根路径与类型。
    */
+  /**
+   * 取内置技能的完整定义：注册表的 list() 只给摘要（多数 provider 不带 path），
+   * get() 才会带回 path / resourceBase / content，预览靠它定位文件。
+   * @param {string} skillName - 技能名。
+   * @param {string|null} presetId - 角色预设。
+   * @returns {Promise<object|undefined>} 技能定义。
+   */
+  async builtinDefinition(skillName, presetId) {
+    const presets = readService(this.ctx, 'agentPresets')
+    const registry = readService(this.ctx, 'skills')
+    if (presets === undefined || registry === undefined) return undefined
+    let lease
+    try {
+      lease = await presets.acquireScope(presetId)
+      const cwd = readService(this.ctx, 'workingDirectory')?.defaultDirectory
+      return await registry.get(skillName, { scope: lease.key, ...cwd === undefined ? {} : { cwd } })
+    } catch (error) {
+      this.ctx.logger?.warn?.(`skill-hub: built-in skill "${skillName}" unavailable: ${describe(error)}`)
+      return undefined
+    } finally {
+      try { await lease?.[Symbol.asyncDispose]?.() } catch { /* lease already released */ }
+    }
+  }
+
   async skillRoot(skillName, options = {}) {
     let file
     if (options.builtin === true) {
       const presetId = typeof options.presetId === 'string' && options.presetId !== '' ? options.presetId : null
-      const builtin = await this.builtinSkills(presetId)
-      const skill = builtin.get(skillName)
-      if (skill === undefined || typeof skill.path !== 'string' || skill.path === '') {
-        throw new HubError('skill-hub/not-found', `No previewable file for built-in skill "${skillName}"`)
+      const definition = await this.builtinDefinition(skillName, presetId)
+      if (definition === undefined) {
+        throw new HubError('skill-hub/not-found', `Built-in skill "${skillName}" is not available for this role`)
       }
-      file = resolve(skill.path)
+      if (typeof definition.path === 'string' && definition.path !== '') {
+        file = resolve(definition.path)
+      } else if (typeof definition.resourceBase?.path === 'string' && definition.resourceBase.path !== '') {
+        return { root: resolve(definition.resourceBase.path), kind: 'dir' }
+      } else {
+        throw new HubError('skill-hub/no-file', `Built-in skill "${skillName}" ships without files; its body is available in the definition only`)
+      }
     } else {
       const entry = this.poolEntry(skillName)
       if (entry === undefined) throw new HubError('skill-hub/not-found', `No installed skill is named "${skillName}"`)
@@ -1217,7 +1246,9 @@ function skillPlanFromArchive(bytes) {
   for (const member of members) {
     const path = sanitizeArchivePath(member.path)
     if (path === undefined) continue
-    if (path === '.DS_Store' || path.endsWith('/.DS_Store') || path.startsWith('__MACOSX/')) continue
+    // 跳过 macOS 垃圾与点目录（.history / .git / .DS_Store）
+    if (path.startsWith('__MACOSX/')) continue
+    if (path.split('/').some(segment => segment.startsWith('.'))) continue
     unpacked += member.data.byteLength
     if (member.data.byteLength > MAX_ENTRY_BYTES) {
       throw new HubError('skill-hub/too-large', `"${path}" exceeds the per-file limit`)
@@ -1242,27 +1273,39 @@ function skillPlanFromArchive(bytes) {
   }
   const skills = []
   const seen = new Set()
-  // One file belongs to the deepest skill root above it, so a SKILL.md at the
-  // archive root never swallows a nested skill directory.
-  const rootList = [...roots]
+  // 先解析每个含 SKILL.md 的目录：只有带合法 frontmatter 的才算"技能"。
+  // 嵌套的 notes/SKILL.md、knowledge-base/SKILL.md 这类是根技能的子文档，
+  // 没有 frontmatter 是正常的 —— 它们应该并入上方那个真正的技能，而不是报错。
+  const parsedRoots = new Map()
+  for (const root of roots) {
+    const prefix = root.length === 0 ? '' : `${root}/`
+    const document = files.find(file => file.path === `${prefix}${SKILL_FILE}`)
+    if (document === undefined) continue
+    const parsed = parseSkillDocument(Buffer.from(document.data).toString('utf8'))
+    parsedRoots.set(root, parsed)
+  }
+  const validRoots = [...parsedRoots.entries()].filter(([, parsed]) => parsed.ok).map(([root]) => root)
+  if (validRoots.length === 0) {
+    const [firstRoot, firstParsed] = [...parsedRoots.entries()][0] ?? ['', { ok: false, error: 'no SKILL.md' }]
+    const prefix = firstRoot.length === 0 ? '' : `${firstRoot}/`
+    throw new HubError('skill-hub/invalid-skill', `${prefix}${SKILL_FILE}: ${firstParsed.error}`)
+  }
+  // 每个文件归属于最深的"合法"技能根，深层子文档自然落到父技能里。
   const rootPrefixOf = (path) => {
     let best
-    for (const root of rootList) {
+    for (const root of validRoots) {
       const prefix = root.length === 0 ? '' : `${root}/`
       if (!path.startsWith(prefix)) continue
       if (best === undefined || prefix.length > best.length) best = prefix
     }
     return best
   }
-  for (const root of rootList) {
+  for (const root of validRoots) {
     const prefix = root.length === 0 ? '' : `${root}/`
     const owned = files.filter(file => rootPrefixOf(file.path) === prefix)
     const document = owned.find(file => file.path === `${prefix}${SKILL_FILE}`)
     if (document === undefined) continue
-    const parsed = parseSkillDocument(Buffer.from(document.data).toString('utf8'))
-    if (!parsed.ok) {
-      throw new HubError('skill-hub/invalid-skill', `${prefix}${SKILL_FILE}: ${parsed.error}`)
-    }
+    const parsed = parsedRoots.get(root)
     if (seen.has(parsed.name)) {
       throw new HubError('skill-hub/duplicate-skill', `The archive installs "${parsed.name}" twice`)
     }

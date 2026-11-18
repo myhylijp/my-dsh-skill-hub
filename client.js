@@ -34,7 +34,7 @@ window.__ModuleLoader__.load({
      * Visible build marker. A browser keeps the bundle it already loaded, so the
      * page states which build it runs: bump this whenever the Client half changes.
      */
-    const UI_REVISION = '2026-11-18.1'
+    const UI_REVISION = '2026-11-18.2'
 
     const zh = {
       panel: '技能',
