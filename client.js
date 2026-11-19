@@ -34,7 +34,7 @@ window.__ModuleLoader__.load({
      * Visible build marker. A browser keeps the bundle it already loaded, so the
      * page states which build it runs: bump this whenever the Client half changes.
      */
-    const UI_REVISION = '2026-11-18.2'
+    const UI_REVISION = '2026-11-19.1'
 
     const zh = {
       panel: '技能',
@@ -752,7 +752,8 @@ window.__ModuleLoader__.load({
 
       /** 打开预览弹窗：先取文件树，默认打开 SKILL.md（没有就打开第一个文本文件）。 */
       const openPreview = async (name, builtin = false) => {
-        void ensureMarked(requestRef.current)
+        // 两个脚本都就绪后再取内容，避免首帧退回纯文本
+        await Promise.all([ensureMarked(requestRef.current), ensurePurify(requestRef.current)])
         setBusy(`read:${name}`)
         setPreviewSkill(name)
         setPreviewBuiltin(builtin)
@@ -1034,6 +1035,32 @@ window.__ModuleLoader__.load({
      * @param {object} props - `size` requested by the sidebar row.
      * @returns {object} React element.
      */
+    /** DOMPurify 只加载一次（与 marked 同一套 vendor 通道）。 */
+    let purifyLib = null
+    let purifyLoading = null
+
+    /**
+     * 取插件自带的 DOMPurify 并执行（UMD 挂到 window.DOMPurify）。
+     * @param {Function} request - Host 请求函数。
+     * @returns {Promise<object|null>} DOMPurify 实例。
+     */
+    async function ensurePurify(request) {
+      if (purifyLib !== null) return purifyLib
+      if (purifyLoading !== null) return purifyLoading
+      purifyLoading = (async () => {
+        try {
+          const source = await request('vendor', { file: 'purify.min.js' })
+          // eslint-disable-next-line no-new-func
+          new Function(source)()
+          purifyLib = window.DOMPurify ?? null
+        } catch {
+          purifyLib = null
+        }
+        return purifyLib
+      })()
+      return purifyLoading
+    }
+
     /** marked 只加载一次。 */
     let markedLib = null
     let markedLoading = null
@@ -1077,11 +1104,20 @@ window.__ModuleLoader__.load({
         : '<details class="sh-fm"><summary>元信息</summary><pre>' + escape(meta) + '</pre></details>'
       if (markedLib === null) return metaHtml + '<pre>' + escape(raw) + '</pre>'
       const html = markedLib.parse(raw)
-      // 技能是本地文件，仍然去掉脚本与内联事件，避免把可执行内容带进渲染树
-      const clean = String(html)
-        .replace(/<script[\s\S]*?<\/script>/gi, '')
-        .replace(/\son\w+\s*=\s*"[^"]*"/gi, '')
-        .replace(/\son\w+\s*=\s*'[^']*'/gi, '')
+      // 先由 marked 正常渲染，再由 DOMPurify 按白名单清洗；
+      // 清洗后仍不可用时退回转义文本，绝不再走正则黑名单。
+      const clean = purifyLib === null ? escape(html) : purifyLib.sanitize(String(html), {
+        ALLOWED_TAGS: [
+          'a', 'b', 'blockquote', 'br', 'caption', 'code', 'dd', 'del', 'details', 'div', 'dl', 'dt',
+          'em', 'figcaption', 'figure', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'hr', 'i', 'img', 'ins',
+          'kbd', 'li', 'mark', 'ol', 'p', 'pre', 'q', 's', 'samp', 'small', 'span', 'strong', 'sub',
+          'summary', 'sup', 'table', 'tbody', 'td', 'tfoot', 'th', 'thead', 'tr', 'u', 'ul', 'var',
+        ],
+        ALLOWED_ATTR: ['href', 'title', 'alt', 'src', 'class', 'colspan', 'rowspan', 'align', 'start', 'open'],
+        ALLOW_DATA_ATTR: false,
+        FORBID_TAGS: ['script', 'style', 'iframe', 'object', 'embed', 'form', 'input', 'button', 'textarea', 'select', 'link', 'meta', 'base'],
+        FORBID_ATTR: ['style', 'srcset', 'formaction', 'xlink:href'],
+      })
       return metaHtml + clean
     }
 

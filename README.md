@@ -44,3 +44,15 @@
 - 上传限制：单文件 12 MiB、ZIP 解压后 64 MiB、单条目 8 MiB；ZIP64 与加密条目不支持。
 - 授权按「预设」记账，不在会话内重新校验；给某个 Agent 追加授权后，其下一个请求步骤的目录会更新。
 - Host 侧代码在应用进程内不会热替换：升级本插件的 `host.js` 后需要重启应用（页面底部会显示 Host 版本，用于确认）。
+
+
+## 预览安全
+
+技能预览渲染的是**第三方上传包里的 SKILL.md**，属于不可信内容，因此渲染分两步：
+
+1. `marked` 把 Markdown 转成 HTML（GFM 表格、代码块、列表、标题都照旧，代码块保留 `language-*` class）；
+2. `DOMPurify`（`vendor/purify.min.js`，3.4.18，Apache-2.0 / MPL-2.0）按白名单清洗后再插入 DOM：
+   - 保留：标题、段落、列表、表格、引用、`pre/code`、`details/summary`、`a[href]`（限 http/https/mailto/相对路径）、`img[src]`（含 `data:image/*`）；
+   - 移除：`script`、`style`、`iframe`、`object`、`embed`、`form` 等标签，以及所有 `on*` 事件属性、`style` 属性、`javascript:` 链接。
+
+DOMPurify 不可用时**退回转义纯文本**（不再使用正则黑名单）。`vendor` 操作只允许 `marked.min.js` 与 `purify.min.js` 两个文件名。

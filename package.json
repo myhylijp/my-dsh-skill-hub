@@ -1,6 +1,6 @@
 {
   "name": "my-dsh-skill-hub",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "license": "MIT",
   "description": "Skills panel: one shared external skill pool plus per-role authorization of pool skills and of each role's system built-in skills",
   "repository": {

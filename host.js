@@ -35,7 +35,7 @@ const HTTP_PATH = '/api/skill-hub'
  * Host build marker, reported in the page snapshot. A running Harness keeps its
  * loaded modules, so this states which Host half the page is talking to.
  */
-const HOST_REVISION = '2026-11-18.2'
+const HOST_REVISION = '2026-11-19.1'
 /** Provider name registered in every Agent's scope layer. */
 const PROVIDER_NAME = 'skill-hub'
 /** Source label of a pool skill in the registry. */
@@ -510,7 +510,10 @@ class SkillHub {
         case 'read': return { ok: true, value: this.readSkill(asRecord(payload)) }
         case 'files': return { ok: true, value: await this.listSkillFiles(asRecord(payload)) }
         case 'file': return { ok: true, value: await this.readSkillFile(asRecord(payload)) }
-        case 'vendor': return { ok: true, value: this.vendorScript('marked.min.js') }
+        case 'vendor': {
+          const file = asRecord(payload).file
+          return { ok: true, value: this.vendorScript(typeof file === 'string' ? file : 'marked.min.js') }
+        }
         default:
           throw new HubError('skill-hub/unknown-endpoint', `unknown endpoint "${endpoint}"`)
       }
@@ -916,6 +919,9 @@ class SkillHub {
    * @returns {string} 脚本文本。
    */
   vendorScript(file) {
+    // 只允许预览器用到的两个第三方脚本，避免把 vendor 目录当任意文件读取口
+    const allowed = new Set(['marked.min.js', 'purify.min.js'])
+    if (!allowed.has(file)) throw new HubError('skill-hub/unknown-vendor', `unknown vendor script "${file}"`)
     if (this.vendorCache.has(file)) return this.vendorCache.get(file)
     const base = dirname(fileURLToPath(import.meta.url))
     const source = readFileSync(join(base, 'vendor', file), 'utf8')
