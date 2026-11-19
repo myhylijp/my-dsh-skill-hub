@@ -36,6 +36,7 @@
 ## 第三方组件
 
 - [`marked`](https://github.com/markedjs/marked) v12.0.2（MIT）—— `vendor/marked.min.js`，仅用于技能预览里的 markdown 渲染；加载失败时退回纯文本。
+- [`dompurify`](https://github.com/cure53/DOMPurify) v3.4.18（Apache-2.0 / MPL-2.0 双许可）—— `vendor/purify.min.js`，用于对预览渲染结果做白名单清洗；许可证全文见 `vendor/purify.LICENSE`。
 
 ## 已知边界
 
