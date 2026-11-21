@@ -4,6 +4,20 @@
 
 在左侧栏新增 **技能** 入口：一个全局共享的技能池，加上按 agent 预设授权的管理页。
 
+## 安装
+
+任选一种。`--profile` 后面换成你自己在用的 profile：桌面版通常是 `desktop`，`dsh web` 通常是 `web`。
+
+```powershell
+# 从 npm 安装（预构建，最快）
+dsh plugin --profile web add my-dsh-skill-hub
+
+# 从 GitHub 源码安装
+dsh plugin --profile web add github:myhylijp/my-dsh-skill-hub
+```
+
+也可以在插件市场里直接搜索安装：dsh-market 和 [开放插件市场](https://dshopen.org/zh/plugins/my-dsh-skill-hub/) 都已收录。装完后如果「插件」页里没有出现，重启一次 `dsh web`。
+
 ## 功能
 
 - **外部技能池**：技能放在 `<dshHome>/skills`（默认即 `%USERPROFILE%\.dsh\skills`，也就是 `skill-filesystem` 的 `user-dsh` 根）。安装方式两种：
