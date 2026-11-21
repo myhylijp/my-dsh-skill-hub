@@ -1,6 +1,6 @@
 # my-dsh-skill-hub
 
-[![Awesome DSH Plugin](https://awesome-dsh-plugin.com/badge.svg)](https://awesome-dsh-plugin.com)
+[![Awesome DSH Plugin](https://awesome-dsh-plugin.com/badge.svg)](https://awesome-dsh-plugin.com) [![开放插件市场](https://img.shields.io/endpoint?url=https%3A%2F%2Fdshopen.org%2Fbadge%2Fmy-dsh-skill-hub.json)](https://dshopen.org/zh/plugins/my-dsh-skill-hub/)
 
 在左侧栏新增 **技能** 入口：一个全局共享的技能池，加上按 agent 预设授权的管理页。
 
